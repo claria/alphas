@@ -76,6 +76,13 @@ class Fnlo(object):
             #
             # Overview functions
             #
+    def get_all(self):
+        results = {}
+        results['xsnlo'] = self.get_central_crosssection()
+        results['pdf_uncert'] = self.get_pdf_uncert()
+        results['cov_pdf_uncert'] = self.get_pdf_cov_matrix()
+        results['scale_uncert'] = self.get_scale_uncert()
+        return results
 
     def get_central_crosssection(self):
         if self._pdf_type == 'MC':
@@ -197,43 +204,44 @@ class Fnlo(object):
     def get_pdf_sample_covariance(self):
         if self._member_crosssections is None:
             self._calc_member_crosssections()
-        return numpy.cov(self._member_crosssections, rowvar=0)
+        return numpy.cov(self._member_crosssections[1:], rowvar=0)
 
     def get_pdf_ev_covariance(self):
+
         cov_matrix = numpy.zeros((self._nobsbins, self._nobsbins))
         if self._member_crosssections is None:
             self._calc_member_crosssections()
         for i in range(1, (self._npdfmembers / 2) + 1):
             cov_matrix += (numpy.matrix(self._member_crosssections[2 * i] -
                     self._member_crosssections[
-                    2 * i - 1]).getT() *\
-                    numpy.matrix(self._member_crosssections[2 * i] -
-                    self._member_crosssections[2 * i - 1]))
+                    2 * i - 1]).getT() * numpy.matrix(
+                self._member_crosssections[2 * i] -
+                self._member_crosssections[2 * i - 1]))
 
         cov_matrix /= 4.
         return cov_matrix
 
 
-def get_scale_uncert(self, var='6p', def_scale_factor=(1.0, 1.0)):
-    if var == '6p':
-        scale_factors = [(1.0, 2.0), (1.0, 0.5), (2.0, 1.0),
-                         (2.0, 2.0), (0.5, 0.5), (0.5, 1.0)]
-    elif var == '2p':
-        scale_factors = [(2.0, 2.0), (0.5, 0.5)]
-    else:
-        scale_factors = []
+    def get_scale_uncert(self, var='6p', def_scale_factor=(1.0, 1.0)):
+        if var == '6p':
+            scale_factors = [(1.0, 2.0), (1.0, 0.5), (2.0, 1.0),
+                             (2.0, 2.0), (0.5, 0.5), (0.5, 1.0)]
+        elif var == '2p':
+            scale_factors = [(2.0, 2.0), (0.5, 0.5)]
+        else:
+            scale_factors = []
 
-    def_crosssection = self.get_member_crosssection(
-        scale_factor=def_scale_factor)
-    scale_uncert = numpy.zeros((2, self._nobsbins))
+        def_crosssection = self.get_member_crosssection(
+            scale_factor=def_scale_factor)
+        scale_uncert = numpy.zeros((2, self._nobsbins))
 
-    for scale_factor in scale_factors:
-        scale_crosssection = self.get_member_crosssection(
-            scale_factor=scale_factor)
-        scale_uncert[0] = numpy.maximum(scale_uncert[0],
-                                        def_crosssection - scale_crosssection)
+        for scale_factor in scale_factors:
+            scale_crosssection = self.get_member_crosssection(
+                scale_factor=scale_factor)
+            scale_uncert[0] = numpy.maximum(scale_uncert[0],
+                                            def_crosssection - scale_crosssection)
 
-        scale_uncert[1] = numpy.maximum(scale_uncert[1],
-                                        scale_crosssection - def_crosssection)
+            scale_uncert[1] = numpy.maximum(scale_uncert[1],
+                                            scale_crosssection - def_crosssection)
 
-    return scale_uncert
+        return scale_uncert
