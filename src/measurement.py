@@ -52,7 +52,18 @@ class Measurement(object):
                 self._corrections.append(source)
             else:
                 self._uncertainties.append(source)
-    
+
+    def apply_scaling(self):
+        for uncertainty in self._uncertainties:
+            if uncertainty.error_scaling == 'none':
+                continue
+            if uncertainty.error_scaling == 'linear':
+                uncertainty.scale(numpy.abs(self.theory/self.data))
+            elif uncertainty.error_scaling == 'poisson':
+                raise Exception('Not yet implemented.')
+            else:
+                raise Exception('No valid error scaling')
+
     def add_uncertainty_source(self, uncertainty):
         self._uncertainties.append(uncertainty)
 
@@ -60,13 +71,13 @@ class Measurement(object):
         uncert_list = []
         for uncertainty in self._uncertainties:
             if corr_type is not None:
-                if uncertainty.corr_type != corr_type:
+                if uncertainty.corr_type not in corr_type:
                     continue
             if origin is not None:
-                if uncertainty.origin != origin:
+                if uncertainty.origin not in origin:
                     continue
             if label is not None:
-                if uncertainty.label != label:
+                if uncertainty.label not in label:
                     continue
             uncert_list.append(uncertainty)
         return uncert_list
@@ -74,21 +85,18 @@ class Measurement(object):
 
     def get_cov_matrix(self, corr_type=None, origin=None, label=None):
         cov_matrix = numpy.zeros((self._nbins,self._nbins))
+
         for uncertainty in self._uncertainties:
             if corr_type is not None:
-                if uncertainty.corr_type != corr_type:
+                if uncertainty.corr_type not in corr_type:
                     continue
             if origin is not None:
-                if uncertainty.origin != origin:
+                if uncertainty.origin not in origin:
                     continue
             if label is not None:
-                if uncertainty.label != label:
+                if uncertainty.label not in label:
                     continue
-            if uncertainty.error_scaling == 'linear':
-                cov_matrix += uncertainty.get_cov_matrix(
-                        scale_factor=self.theory/self.data)
-            else:
-                cov_matrix += uncertainty.get_cov_matrix()
+            cov_matrix += uncertainty.get_cov_matrix()
 
         return cov_matrix
 #
@@ -194,46 +202,47 @@ class Source(object):
 class UncertaintySource(Source):
 
     def __init__(self, array=None, label=None, origin=None, cov_matrix=None,
-                corr_matrix= None, corr_type=None, error_scaling=None):
+                corr_matrix= None, corr_type=None, error_scaling='none'):
                     
         super(UncertaintySource, self).__init__(label=label, origin=origin)
 
         if cov_matrix is not None:
             self._symmetric = True
             array = numpy.sqrt(cov_matrix.diagonal())
-
-        if array.ndim == 1:
-            self._symmetric = True
-            self._nbins = array.shape[0]
-            self._abs_uncert = numpy.vstack((array,array))
-        elif array.ndim ==2:
-            self._symmetric = False
-            self._nbins = array.shape[1]
-            self._abs_uncert = array
+            self._corr_matrix = cov_matrix / numpy.outer(array,array)
 
         self._corr_type = corr_type
         self._corr_matrix = corr_matrix
-        self._cov_matrix = cov_matrix
         self.error_scaling = error_scaling
 
+        #Set Diagonal error elements
+        if array.ndim == 1:
+            self._symmetric = True
+            self._nbins = array.shape[0]
+            self._array = numpy.vstack((array,array))
+        elif array.ndim ==2:
+            self._symmetric = False
+            self._nbins = array.shape[1]
+            self._array = array
+
     def __call__(self, symmetric=False, *args, **kwargs):
-        return self.get_abs_uncert(symmetric=True)
+        return self.get_array(symmetric=True)
 
-    def set_abs_uncert(self, abs_uncert, symmetric=False):
-        if abs_uncert.ndim == 1:
+    def set_array(self, array):
+        if array.ndim == 1:
             #Symmetric uncertainty
-            self._abs_uncert = numpy.array((abs_uncert,abs_uncert))
-        elif abs_uncert.ndim == 2:
+            self._array = numpy.array((array,array))
+        elif array.ndim == 2:
             #Assume it is asymmetric
-            self._abs_uncert = abs_uncert
-        self._nbins = self._abs_uncert.shape[1]
-        self._symmetric = symmetric
+            self._array = array
+        self._nbins = self._array.shape[1]
 
-    def get_abs_uncert(self, symmetric=False):
+    def get_array(self, symmetric=False):
         if symmetric is True:
-            return self._symmetrize(self._abs_uncert)
+            return self._symmetrize(self._array)
         else:
-            return self._abs_uncert
+            return self._array
+
 
     # def set_relative_uncertainty(self, rel_uncert, ref, symmetric=False):
     #     self._abs_uncert = rel_uncert * ref
@@ -247,23 +256,16 @@ class UncertaintySource(Source):
     #         return self._abs_uncert / ref
 
     def set_cov_matrix(self, cov_matrix):
-        self._cov_matrix = cov_matrix
-        self._nbins = self._cov_matrix.shape[0]
-        self._abs_uncert = numpy.array((cov_matrix.diagonal(),
-                                    cov_matrix.diagonal()))
-        self._sym_uncert = cov_matrix.diagonal()
 
-    def get_cov_matrix(self, scale_factor=None):
-        if self._cov_matrix is None:
-            self._calc_cov_matrix()
-        if (self.error_scaling != 'none') and (scale_factor is None):
-            raise Exception("No Scaling provided and error source is scaled")
-        elif scale_factor is not None:
-            return self._cov_matrix * numpy.outer(scale_factor,scale_factor)
-        else:
-            return self._cov_matrix
-    
-    cov_matrix = property(get_cov_matrix, set_cov_matrix)
+        array = numpy.sqrt(cov_matrix.diagonal())
+        self._corr_matrix = cov_matrix / numpy.outer(array,array)
+        self.set_array(array)
+        self._symmetric = True
+
+    def scale(self, scale_factor):
+        self._array *= scale_factor
+
+
 
     def set_correlation_matrix(self, corr_matrix):
         self._corr_type = 'custom'
@@ -279,14 +281,15 @@ class UncertaintySource(Source):
 
     corr_matrix = property(get_correlation_matrix, set_correlation_matrix)
 
-    def _calc_correlation_matrix(self):
+    def get_correlation_matrix(self):
         if self._corr_type == 'fully':
-            self._corr_matrix = numpy.ones((self._nbins,self._nbins))
+            return numpy.ones((self._nbins,self._nbins))
         elif self._corr_type == 'uncorr':
-            self._corr_matrix = numpy.identity(self._nbins)
+            return numpy.identity(self._nbins)
+        elif self._corr_type == 'bintobin':
+            return self._corr_matrix
         else:
-            pass
-            # in case of custom, corr matrix should already be filled
+            raise Exception('Correlation Type invalid.')
 
     def set_corr_type(self, corr_type):
         self._corr_type = corr_type
@@ -315,20 +318,22 @@ class UncertaintySource(Source):
         
     origin = property(get_origin, set_origin)
 
-    def _calc_cov_matrix(self):
+    def get_cov_matrix(self):
         if self._corr_type == 'fully':
-            self._cov_matrix = numpy.outer(
-                    self.get_abs_uncert(symmetric=True),
-                    self.get_abs_uncert(symmetric=True))
+            return numpy.outer(
+                    self.get_array(symmetric=True),
+                    self.get_array(symmetric=True))
         elif self._corr_type == 'uncorr':
-            self._cov_matrix = numpy.diagflat(
-                    numpy.square(self.get_abs_uncert(symmetric=True)))
-        else:
-            self._cov_matrix = (numpy.outer(
-                    self.get_abs_uncert(symmetric=True),
-                    self.get_abs_uncert(symmetric=True)) *
+            return numpy.diagflat(
+                    numpy.square(self.get_array(symmetric=True)))
+        elif self._corr_type == 'bintobin':
+            return (numpy.outer(
+                    self.get_array(symmetric=True),
+                    self.get_array(symmetric=True)) *
                     self._corr_matrix)
+        else:
+            raise Exception('Correlation type not valid.')
 
-    def _symmetrize(self, abs_uncert):
+    def _symmetrize(self, array):
         """Symmetrize uncertainty of shape (2,xxx)"""
-        return 0.5 * (abs_uncert[0] + abs_uncert[1])
+        return 0.5 * (array[0] + array[1])

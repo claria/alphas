@@ -12,6 +12,11 @@ from config import config
 
 class Provider(object):
 
+    def __init__(self):
+        self.sources = []
+        self._array_dict = None
+
+
     def parse_arraydict(self):
         for label, item in self._array_dict.items():
             if not label in self._ana_config['data_description']:
@@ -45,19 +50,18 @@ class Provider(object):
                                     corr_type = corr_type,
                                     error_scaling= error_scaling)
 
-                self.uncertainty_sources.append(uncertainty_source)
+                self.sources.append(uncertainty_source)
 
 
 class DataProvider(Provider):
 
     def __init__(self, analysis):
-
+        super(DataProvider, self).__init__()
         self._ana_config = config.get_config(analysis)
         self._data_file = os.path.join(config.data_dir, analysis + '.npz')
 
         self._array_dict = arraydict.ArrayDict(self._data_file)
-        self.sources = []
-        self.uncertainty_sources = []
+
 
         self.parse_arraydict()
 
@@ -67,9 +71,11 @@ class DataProvider(Provider):
 class TheoryProvider(Provider):
     
     def __init__(self, analysis, pdf_family, pdf_set, scale):
+
+        super(TheoryProvider, self).__init__()
         self._analysis = analysis
         self._pdf_set = pdf_set
-        self._scale = scale
+        self._scale = [float(item)/10. for item in scale.split('_')]
         self._ana_config = config.get_config(analysis)
         self._table = self._ana_config['theory']['table']
         self._table_filepath = os.path.join(config.table_dir,
@@ -77,15 +83,13 @@ class TheoryProvider(Provider):
 
         self._lhapdf_config = config.get_config('lhapdf')[pdf_family][pdf_set]
 
-        scale_str = '_'.join(str(x).replace('.','') for x in scale)
+        #scale_str = '_'.join(str(x).replace('.','') for x in scale)
         self._cache_filepath = os.path.join(config.cache_theory,
                 self._table, pdf_family, 
-                '{}_{}.npz'.format(pdf_set, scale_str))
+                '{}_{}.npz'.format(pdf_set, scale))
 
         self._array_dict = None
 
-        self.sources = []
-        self.uncertainty_sources = []
         self._read_cached()
         
         
@@ -105,6 +109,7 @@ class TheoryProvider(Provider):
                             scale_factor = self._scale,
                             pdf_type=self._lhapdf_config['pdf_unc'])
         self._array_dict = arraydict.ArrayDict(**fnloreader.get_all())
+        del fnloreader
         self._array_dict.save(self._cache_filepath)
 
 

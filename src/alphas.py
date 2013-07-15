@@ -1,23 +1,18 @@
-import os
-import sys
-
-import numpy
-
-import measurement
+from src.measurement import Measurement
+from src.providers import DataProvider, TheoryProvider
+from src.chi2 import Chi2Cov, Chi2Nuisance
+from config import config
 
 
-class alphas:
+def perform_chi2test(analysis, pdf_family):
 
-    def __init__(self):
-        pass
+	data = DataProvider('qcd11004v2')
+	
+	lhapdf_config = config.get_config('lhapdf')
+	ana_config = config.get_config(analysis)
 
-
-    def add_measurements(self):
-        pass
-
-    def interpolate_alphas_values(self):
-        pass
-
-
-
-
+	for pdf_set in lhapdf_config[pdf_family]:
+		print pdf_set
+		for scale in ana_config['theory'].as_list('scales'):
+			theo = TheoryProvider(analysis, pdf_family, pdf_set, scale)
+			print scale

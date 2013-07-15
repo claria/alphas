@@ -1,5 +1,5 @@
 import sys
-
+import gc
 import numpy
 
 from fastnloreader import FastNLOLHAPDF
@@ -25,6 +25,9 @@ class Fnlo(object):
 
         # FastNLOReader instance
         SetGlobalVerbosity(1)
+        gc.collect()
+        print gc.garbage
+        gc.set_debug(gc.DEBUG_SAVEALL)
         self._fnlo = FastNLOLHAPDF(self._table_filename,
                                    self._lhgrid_filename, self._member)
         self._fnlo.FillPDFCache()
@@ -46,6 +49,9 @@ class Fnlo(object):
         #self._xsnlo = None
         #self._pdf_uncert = None
         #self._pdf_cov_matrix = None
+
+    def __del__(self):
+        del self._fnlo
 
     def _identify_pdf(self):
         """ Identify type of PDF LHgrid file

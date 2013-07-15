@@ -31,9 +31,22 @@ class Chi2Nuisance(Chi2):
 
     def __init__(self, measurement):
         super(Chi2Nuisance,self).__init__(measurement)
-        self._cov_matrix = self._measurement.get_cov_matrix(corr_type='bintobin')
+        self._cov_matrix = self._measurement.get_cov_matrix(corr_type=('bintobin','uncorr'))
         self._inv_matrix = numpy.matrix(self._cov_matrix).getI()
-        self._beta = self._measurement.get_uncert_list(corr_type='fully')
+        self._beta = self._measurement.get_uncert_list(corr_type=('fully',))
+
+        self._chi2_correlated = 0.0
+        self._theory_mod = None
+
+    def get_nuisance_parameters(self):
+        beta_labels =  [uncertainty.label for uncertainty in self._beta]
+        return dict(zip(beta_labels,self._r))
+
+    def get_chi2_correlated(self):
+        return self._chi2_correlated
+
+    def get_theory_modified(self):
+        return self._theory_mod
 
     def _calculate_chi2(self):
         """Calculate Chi2 with different kinds of uncertainties.
@@ -70,13 +83,13 @@ class Chi2Nuisance(Chi2):
                 #                 syst_error[j][l] * data[l] * inv_matrix[l,i]
 
         #Multiply by -1 so nuisance parameters correspond to shift
-        r = numpy.linalg.solve(A, B) * (-1)
-        #print r
+        self._r = numpy.linalg.solve(A, B) * (-1)
+        labels =  [uncertainty.label for uncertainty in self._beta]
         #Calculate theory prediction shifted by nuisance parameters
-        theory_mod = self._theory.copy()
+        self._theory_mod = self._theory.copy()
         for k in range(0, nbeta):
-            theory_mod = theory_mod - r[k] * (self._beta[k]())
-            chi2_corr += r[k]**2
-        residual_mod = numpy.matrix(self._data - theory_mod)
+            self._theory_mod = self._theory_mod - self._r[k] * (self._beta[k]())
+            chi2_corr += self._r[k]**2
+        residual_mod = numpy.matrix(self._data - self._theory_mod)
         self._chi2 = (residual_mod * self._inv_matrix * residual_mod.getT())[0, 0]
         self._chi2 += chi2_corr
