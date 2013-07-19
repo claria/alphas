@@ -6,8 +6,9 @@ arraydict.py
 Created by Vincent Noel - LMD/CNRS on 2011-11-24.
 """
 
-import numpy as np
 import os
+
+import numpy as np
 
 
 class ArrayDict(dict):

@@ -5,9 +5,8 @@ import matplotlib
 def prepare_matplotlib():
 
 	matplotlib.use('agg')
-	import matplotlib.pyplot as plt
 
-	matplotlib.rcParams['lines.linewidth'] = 2
+    matplotlib.rcParams['lines.linewidth'] = 2
 	matplotlib.rcParams['font.family'] = 'sans-serif'
 	matplotlib.rcParams['font.style'] = 'normal'
 	matplotlib.rcParams['font.size'] = 22.

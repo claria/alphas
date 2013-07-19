@@ -1,15 +1,9 @@
 #! /usr/bin/env python2
 
 import os
-import sys
-import math
-import code
-import argparse
-import numpy
 
 import plotting
 plotting.prepare_matplotlib()
-import matplotlib
 import matplotlib.pyplot as plt
 
 import fnlo

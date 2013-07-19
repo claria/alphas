@@ -1,9 +1,8 @@
 import sys
-import gc
 import numpy
 
 from fastnloreader import FastNLOLHAPDF
-from fastnloreader import SetGlobalVerbosity
+#from fastnloreader import SetGlobalVerbosity
 
 
 class Fnlo(object):
@@ -24,10 +23,7 @@ class Fnlo(object):
 
 
         # FastNLOReader instance
-        SetGlobalVerbosity(1)
-        gc.collect()
-        print gc.garbage
-        gc.set_debug(gc.DEBUG_SAVEALL)
+        #SetGlobalVerbosity(1)
         self._fnlo = FastNLOLHAPDF(self._table_filename,
                                    self._lhgrid_filename, self._member)
         self._fnlo.FillPDFCache()
@@ -76,9 +72,7 @@ class Fnlo(object):
         elif self._lhgrid_filename.startswith('ABM'):
             self._pdf_type = 'SEV'
         else:
-            print 'No PDF type identified. Quitting.'
-            sys.exit(1)
-
+            raise Exception("PDF type not identified:{}".format(self._lhgrid_filename))
             #
             # Overview functions
             #
@@ -93,11 +87,10 @@ class Fnlo(object):
     def get_central_crosssection(self):
         if self._pdf_type == 'MC':
             return self.get_mean_crosssection()
-        elif self._pdf_type in ['EV', 'SEV', 'EVVAR']:
+        elif self._pdf_type in ['EV', 'SEV', 'EVVAR', 'NONE']:
             return self.get_member_crosssection(member=0)
         else:
-            return None
-
+            raise Exception("PDF type not identified:{}".format(self._pdf_type))
     def get_bins_up(self):
         return self._bins_up
 
@@ -163,6 +156,7 @@ class Fnlo(object):
         if self._member_crosssections is None:
             self._calc_member_crosssections()
         pdf_uncert = numpy.zeros((2, self._nobsbins))
+        print "npdfmembers", self._npdfmembers
         if symmetric is False:
             for i in range(1, self._npdfmembers / 2 + 1):
                 pdf_uncert[0] += numpy.square(numpy.minimum(numpy.minimum(
