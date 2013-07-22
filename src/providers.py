@@ -33,10 +33,9 @@ class Provider(object):
                                                            error_scaling=error_scaling)
                 elif corr_type == 'bintobin':
                     if 'cov_' + label in self._array_dict:
+                        print "yepcovmatrix"
                         uncertainty_source = UncertaintySource(origin=origin,
-                                                               cov_matrix=
-                                                               self._array_dict[
-                                                                   'cov_' + label],
+                                                               cov_matrix=self._array_dict['cov_' + label],
                                                                label=label,
                                                                corr_type=corr_type,
                                                                error_scaling=error_scaling)
@@ -100,10 +99,12 @@ class TheoryProvider(Provider):
             self.parse_arraydict()
 
     def _cache_theory(self):
-
+        print "cachescale", float(self._lhapdf_config.get('pdf_clscale', 1.0))
         fnloreader = Fnlo(self._table_filepath, self._lhgrid_filename,
                           scale_factor=self._scale,
-                          pdf_type=self._lhapdf_config['pdf_type'])
+                          pdf_type=self._lhapdf_config['pdf_type'],
+                          member=int(self._lhapdf_config.get('member', 0)),
+                          pdf_clscale=float(self._lhapdf_config.get('pdf_clscale', 1.0)))
         self._array_dict = arraydict.ArrayDict(**fnloreader.get_all())
         del fnloreader
         self._array_dict.save(self._cache_filepath)

@@ -1,4 +1,3 @@
-import sys
 import numpy
 
 from fastnloreader import FastNLOLHAPDF
@@ -7,7 +6,7 @@ from fastnloreader import FastNLOLHAPDF
 
 class Fnlo(object):
     def __init__(self, table_filename, lhgrid_filename, member=0,
-                 scale_factor=(1.0, 1.0), pdf_type=None):
+                 scale_factor=(1.0, 1.0), pdf_type=None, pdf_clscale=1.0):
 
         self._table_filename = table_filename
         self._lhgrid_filename = lhgrid_filename
@@ -20,7 +19,7 @@ class Fnlo(object):
         else:
             self._pdf_type = pdf_type
 
-
+        self._pdf_clscale = pdf_clscale
 
         # FastNLOReader instance
         #SetGlobalVerbosity(1)
@@ -57,10 +56,9 @@ class Fnlo(object):
         EVVAR: Asymmetric Eigenvectors with additional VAR PDF
         """
         # Scale PDF self._clscale
-        self._clscale = 1.00
         if self._lhgrid_filename.startswith('CT10'):
             self._pdf_type = 'EV'
-            self._clscale = 1.645
+            self._pdf_clscale = 1.645
         elif self._lhgrid_filename.startswith('MSTW'):
             self._pdf_type = 'EV'
         elif self._lhgrid_filename.startswith('NNPDF'):
@@ -72,25 +70,29 @@ class Fnlo(object):
         elif self._lhgrid_filename.startswith('ABM'):
             self._pdf_type = 'SEV'
         else:
-            raise Exception("PDF type not identified:{}".format(self._lhgrid_filename))
+            raise Exception(
+                "PDF type not identified:{}".format(self._lhgrid_filename))
             #
             # Overview functions
             #
+
     def get_all(self):
         results = {}
         results['xsnlo'] = self.get_central_crosssection()
-        results['pdf_uncert'] = self.get_pdf_uncert()
-        results['cov_pdf_uncert'] = self.get_pdf_cov_matrix()
         results['scale_uncert'] = self.get_scale_uncert()
+        if self._pdf_type in ['MC', 'EV', 'SEV', 'EVVAR']:
+            results['pdf_uncert'] = self.get_pdf_uncert()
+            results['cov_pdf_uncert'] = self.get_pdf_cov_matrix()
         return results
 
     def get_central_crosssection(self):
         if self._pdf_type == 'MC':
             return self.get_mean_crosssection()
         elif self._pdf_type in ['EV', 'SEV', 'EVVAR', 'NONE']:
-            return self.get_member_crosssection(member=0)
+            return self.get_member_crosssection(member=self._member)
         else:
             raise Exception("PDF type not identified:{}".format(self._pdf_type))
+
     def get_bins_up(self):
         return self._bins_up
 
@@ -107,8 +109,7 @@ class Fnlo(object):
             scale_factor = self._scale_factor
         if member is None:
             if self._member is None:
-                print "No valid member"
-                sys.exit(1)
+                raise Exception("No valid member")
             else:
                 member = self._member
 
@@ -133,9 +134,9 @@ class Fnlo(object):
                 member=member)
 
 
-            def get_cross_section(self, member=None, scale_factor=None):
-                if scale_factor:
-                    self._scale_factor = scale_factor
+    def get_cross_section(self, member=None, scale_factor=None):
+        if scale_factor:
+            self._scale_factor = scale_factor
         if self._pdf_type == 'MC':
             return self.get_mean_crosssection()
         elif self._pdf_type in ['EV', 'SEV']:
@@ -150,7 +151,7 @@ class Fnlo(object):
         if self._member_crosssections is None:
             self._calc_member_crosssections()
         std = numpy.std(self._member_crosssections[1:], axis=0)
-        return numpy.vstack((std, std))
+        return numpy.vstack((std, std)) / self._pdf_clscale
 
     def get_pdf_ev(self, symmetric=False):
         if self._member_crosssections is None:
@@ -179,7 +180,7 @@ class Fnlo(object):
                     self._member_crosssections[2 * i])
             pdf_uncert[0] = 0.5 * numpy.sqrt(pdf_uncert[0])
             pdf_uncert[1] = pdf_uncert[0]
-        return pdf_uncert
+        return pdf_uncert / self._pdf_clscale
 
     def get_pdf_uncert(self, symmetric=False):
         if self._pdf_type == 'MC':
@@ -204,21 +205,22 @@ class Fnlo(object):
     def get_pdf_sample_covariance(self):
         if self._member_crosssections is None:
             self._calc_member_crosssections()
-        return numpy.cov(self._member_crosssections[1:], rowvar=0)
+        return numpy.cov(self._member_crosssections[1:], rowvar=0) /\
+            self._pdf_clscale**2
 
     def get_pdf_ev_covariance(self):
-
+        print "scalef", self._pdf_clscale
         cov_matrix = numpy.zeros((self._nobsbins, self._nobsbins))
         if self._member_crosssections is None:
             self._calc_member_crosssections()
         for i in range(1, (self._npdfmembers / 2) + 1):
-            cov_matrix += (numpy.matrix(self._member_crosssections[2 * i] -
-                    self._member_crosssections[
-                    2 * i - 1]).getT() * numpy.matrix(
+            cov_matrix += numpy.matrix(self._member_crosssections[2 * i] -
+                                       self._member_crosssections[
+                                           2 * i - 1]).getT() * numpy.matrix(
                 self._member_crosssections[2 * i] -
-                self._member_crosssections[2 * i - 1]))
+                self._member_crosssections[2 * i - 1])
 
-        cov_matrix /= 4.
+        cov_matrix /= (4. * self._pdf_clscale**2)
         return cov_matrix
 
 

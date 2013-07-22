@@ -6,7 +6,8 @@ import numpy.ma
 
 class Measurement(object):
 
-    def __init__(self, sources, data=None, theory=None):
+    def __init__(self, sources, data=None, theory=None,
+                 scenario='all', pdf_set='', analysis=''):
 
         self.theory = theory
         self.data = data
@@ -16,11 +17,15 @@ class Measurement(object):
         self._mask = None
         self._nbins = None
         self._sources_dict = {}
+        self.pdf_set = pdf_set
+        self.analysis = analysis
+        self.scenario = scenario
 
         if sources is not None:
             self.add_sources(sources)
 
         self.apply_scaling()
+
 
 
     def set_mask(self, mask):
@@ -78,10 +83,10 @@ class Measurement(object):
         """
         return set(self._sources_dict[label].get_array())
 
-
     def add_sources(self, sources):
         for source in sources:
-            self._sources_dict[source.label] = source
+            #Check if source is needed in current scenario
+
             if source.origin == 'data':
                 self.data = source
             elif source.origin == 'theory':
@@ -90,8 +95,15 @@ class Measurement(object):
                 self._bins.append(source)
             elif source.origin == 'correction':
                 self._corrections.append(source)
-            else:
+            elif source.origin in ['theo', 'exp']:
+                if self.scenario is not 'all' and \
+                        source.label not in self.scenario:
+                    continue
                 self._uncertainties.append(source)
+            else:
+                raise Exception('Source origin not known')
+
+            self._sources_dict[source.label] = source
 
     def apply_scaling(self):
         for uncertainty in self._uncertainties:
@@ -99,6 +111,7 @@ class Measurement(object):
                 continue
             if uncertainty.error_scaling == 'linear':
                 uncertainty.scale(numpy.abs(self.theory/self.data))
+                uncertainty.error_scaling == 'none'
             elif uncertainty.error_scaling == 'poisson':
                 raise Exception('Not yet implemented.')
             else:
@@ -183,9 +196,7 @@ class Measurement(object):
 
 #     def get_dic_of_abs_uncertainties(self, corr_type='', symmetric=False):
 #         uncert_dic = {}
-#         print self._uncertainties
 #         for label, uncertainty in self._uncertainties.items():
-#             print uncertainty.corr_type
 #             if uncertainty.corr_type == corr_type:
 #                 uncert_dic[label] = uncertainty.get_abs_uncert(
 #                   symmetric=symmetric)
@@ -284,14 +295,13 @@ class UncertaintySource(Source):
                 corr_matrix= None, corr_type=None, error_scaling='none'):
                     
         super(UncertaintySource, self).__init__(label=label, origin=origin)
-
         if cov_matrix is not None:
             self._symmetric = True
             array = numpy.sqrt(cov_matrix.diagonal())
             self._corr_matrix = cov_matrix / numpy.outer(array,array)
-
+        else:
+            self._corr_matrix = corr_matrix
         self._corr_type = corr_type
-        self._corr_matrix = corr_matrix
         self.error_scaling = error_scaling
 
         #Set Diagonal error elements
