@@ -5,8 +5,7 @@ import argparse
 import logging
 
 #import numpy
-from src.alphas import perform_chi2test
-from src.plot import plot
+from src.alphas import perform_chi2test, plot
 
 logger = logging.getLogger('root')
 logger.setLevel(logging.DEBUG)
@@ -26,7 +25,7 @@ def main():
     #Parent
     parent_parser = argparse.ArgumentParser(add_help=False, prog='PROG')
     parent_parser.add_argument('-a', '--analysis', help='analysis name')
-    parent_parser.add_argument('-p', '--pdf_family', help='PDF family')
+    parent_parser.add_argument('-p', '--pdf_family', help='PDF family', default=None)
     parent_parser.add_argument('--pdf_sets', type=str, nargs='+', default=[],
                                help='PDF Sets')
     #Fitting
@@ -53,8 +52,9 @@ def main():
     parser_plot.add_argument('--cs_ratio', help='Chi2 distributions')
     parser_plot.set_defaults(func=plot)
 
-    args = vars(parser.parse_args())
-    args['func'](**args)
+    kwargs = vars(parser.parse_args())
+    print kwargs
+    kwargs['func'](**kwargs)
 
 
 if __name__ == '__main__':

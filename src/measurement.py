@@ -7,7 +7,7 @@ import numpy.ma
 class Measurement(object):
 
     def __init__(self, sources, data=None, theory=None,
-                 scenario='all', pdf_set='', analysis=''):
+                 scenario='all', pdf_set='', analysis='', pdf_config=None):
 
         self.theory = theory
         self.data = data
@@ -18,6 +18,7 @@ class Measurement(object):
         self._nbins = None
         self._sources_dict = {}
         self.pdf_set = pdf_set
+        self.pdf_config = pdf_config
         self.analysis = analysis
         self.scenario = scenario
 
@@ -59,7 +60,16 @@ class Measurement(object):
     def get_bin(self, label):
         #TODO: Generalize for all cases
         return numpy.array((self._sources_dict["{}low".format(label)].get_array(),
-                   self._sources_dict["{}high".format(label)].get_array()))
+                   self._sources_dict["{}high".format(label)].get_array())).T
+
+    def get_unique_bin(self, label):
+        bin = self.get_bin(label)
+        b = numpy.ascontiguousarray(bin).view(numpy.dtype((numpy.void,
+                                         bin.dtype.itemsize * bin.shape[1])))
+        _, idx = numpy.unique(b, return_index=True)
+
+        return bin[idx]
+
 
     def get_bin_mid(self, label):
 
@@ -70,18 +80,16 @@ class Measurement(object):
     def get_bin_error(self, label):
         #TODO: Generalize for all cases
 
-        return numpy.abs(self.get_bin(label) - self.get_bin_mid(label))
+        return numpy.abs(self.get_bin(label).T - self.get_bin_mid(label))
 
     def get_source(self, label):
         return self._sources_dict[label]
 
-
-
-    def get_set(self, label):
+    def get_unique_source(self, label):
         """Return set of source array
         :param label: label attribute of source
         """
-        return set(self._sources_dict[label].get_array())
+        return numpy.unique(self._sources_dict[label].get_array())
 
     def add_sources(self, sources):
         for source in sources:
