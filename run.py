@@ -5,7 +5,7 @@ import argparse
 import logging
 
 #import numpy
-from src.alphas import perform_chi2test, plot
+from src.alphas import perform_chi2test, plot, batch_processing
 
 logger = logging.getLogger('root')
 logger.setLevel(logging.DEBUG)
@@ -46,11 +46,14 @@ def main():
                              choices=['ratio', 'asratio', 'chi2'],
                              help='Types of plots')
 
-    parser_plot.add_argument('--assensitivity', help='AS sensitivity plots')
-    parser_plot.add_argument('--chi2curves', help='Chi2 distributions')
-    parser_plot.add_argument('--crosssection', help='Chi2 distributions')
-    parser_plot.add_argument('--cs_ratio', help='Chi2 distributions')
+    parser_plot.add_argument('-s', '--scenario', default='all',
+                            help='PDF Unc Source')
+
     parser_plot.set_defaults(func=plot)
+
+    parser_batch = subparsers.add_parser('batch', help='Do Batch processing',
+                                        parents=[parent_parser])
+    parser_batch.set_defaults(func=batch_processing)
 
     kwargs = vars(parser.parse_args())
     print kwargs

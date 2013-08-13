@@ -8,6 +8,7 @@ from config import config
 
 
 class Provider(object):
+
     def __init__(self):
         self.sources = []
         self._array_dict = None
@@ -33,10 +34,8 @@ class Provider(object):
                                                            error_scaling=error_scaling)
                 elif corr_type == 'bintobin':
                     if 'cov_' + label in self._array_dict:
-                        print "yepcovmatrix"
                         uncertainty_source = UncertaintySource(origin=origin,
-                                                               cov_matrix=
-                                                               self._array_dict[
+                                                               cov_matrix=self._array_dict[
                                                                    'cov_' + label],
                                                                label=label,
                                                                corr_type=corr_type,
@@ -55,6 +54,7 @@ class Provider(object):
 
 
 class DataProvider(Provider):
+
     def __init__(self, analysis):
         super(DataProvider, self).__init__()
         self._ana_config = config.get_config(analysis)
@@ -66,6 +66,7 @@ class DataProvider(Provider):
 
 
 class TheoryProvider(Provider):
+
     def __init__(self, analysis, pdf_set, scale):
 
         super(TheoryProvider, self).__init__()
@@ -81,7 +82,7 @@ class TheoryProvider(Provider):
         self._lhapdf_config = config.get_config('lhapdf2')['pdf_sets'][pdf_set]
         self._lhgrid_filename = self._lhapdf_config['lhgrid_file']
 
-        #scale_str = '_'.join(str(x).replace('.','') for x in scale)
+        # scale_str = '_'.join(str(x).replace('.','') for x in scale)
         self._cache_filepath = os.path.join(config.cache_theory,
                                             self._table,
                                             '{}_{}.npz'.format(pdf_set, scale))
@@ -100,7 +101,6 @@ class TheoryProvider(Provider):
             self.parse_arraydict()
 
     def _cache_theory(self):
-        print "cachescale", float(self._lhapdf_config.get('pdf_clscale', 1.0))
         fnloreader = Fnlo(self._table_filepath, self._lhgrid_filename,
                           scale_factor=self._scale,
                           pdf_type=self._lhapdf_config['pdf_type'],

@@ -30,7 +30,7 @@ class SimplePlot(object):
         """
         pass
 
-    def finalize(self, filepath='test.png'):
+    def finalize(self, filepath='test.pdf'):
         """
         Apply final settings, autoscale etc
         Save the plot
@@ -46,8 +46,8 @@ class SimplePlot(object):
         self.fig.savefig(filepath)
 
     def prepare_matplotlib(self):
-        #matplotlib.use('agg')
-        #matplotlib.use('pdf')
+        # matplotlib.use('agg')
+        # matplotlib.use('pdf')
 
         matplotlib.rcParams['lines.linewidth'] = 2
         matplotlib.rcParams['font.family'] = 'sans-serif'
@@ -55,12 +55,12 @@ class SimplePlot(object):
         matplotlib.rcParams['font.size'] = 22.
         matplotlib.rcParams['legend.fontsize'] = 14.
         matplotlib.rcParams['text.usetex'] = False
-        #Axes
+        # Axes
         matplotlib.rcParams['axes.linewidth'] = 2.0
-        #Saving
+        # Saving
         matplotlib.rcParams['savefig.bbox'] = 'tight'
         matplotlib.rcParams['savefig.dpi'] = 300
-        matplotlib.rcParams['savefig.format'] = 'png'
+        matplotlib.rcParams['savefig.format'] = 'pdf'
 
     #
     # Helper functions
@@ -88,7 +88,7 @@ class SimplePlot(object):
                          transform=self.ax.transAxes, color='black')
 
     def autoscale(self, xmargin=0.0, ymargin=0.0, margin=0.0):
-        #User defined autoscale with margins
+        # User defined autoscale with margins
         x0, x1 = tuple(self.ax.dataLim.intervalx)
         if margin > 0:
             xmargin = margin
@@ -141,7 +141,7 @@ class AlphasSensitivityPlot(SimplePlot):
         super(AlphasSensitivityPlot, self).__init__()
         self.measurements = measurements
         self.prepare()
-        self.set_style(style='cms')
+        self.set_style(style='cmsprel')
 
     def prepare(self):
         super(AlphasSensitivityPlot, self).prepare()
@@ -168,7 +168,7 @@ class AlphasSensitivityPlot(SimplePlot):
         min_measurement = self.measurements[0]
         max_measurement = self.measurements[0]
         for measurement in self.measurements:
-            #Find central PDF
+            # Find central PDF
             if measurement.pdf_config.get('central', 'False') == 'True':
                 ref_measurement = measurement
             if (max_measurement.pdf_config.as_float('alphas') <
@@ -194,14 +194,15 @@ class AlphasSensitivityPlot(SimplePlot):
                 0]) / ref_measurement.theory, isx=False),
             y2=self.steppify_bin((ref_measurement.data + exp_unc[
                 1]) / ref_measurement.theory, isx=False),
-            hatch='/', alpha=1.0, color='none',
+            hatch='//', alpha=1.0, color='none',
             edgecolor='Gold')
 
-        self.ax.plot(self.steppify_bin(ref_measurement.get_bin('pt').T, isx=True),
-                     self.steppify_bin(
-                         ref_measurement.theory / ref_measurement.theory,
-                         isx=False),
-                     color='red', linestyle='-', linewidth=2)
+        self.ax.plot(
+            self.steppify_bin(ref_measurement.get_bin('pt').T, isx=True),
+            self.steppify_bin(
+                ref_measurement.theory / ref_measurement.theory,
+                isx=False),
+            color='red', linestyle='-', linewidth=2)
 
         self.ax.text(0.02, 0.98, ref_measurement.pdf_set, va='top',
                      ha='left', transform=self.ax.transAxes, color='black')
@@ -220,11 +221,12 @@ class AlphasSensitivityPlot(SimplePlot):
                 linewidth = 2
 
                 # new_color = next(ax._get_lines.color_cycle)
-            self.ax.plot(self.steppify_bin(measurement.get_bin('pt').T, isx=True),
-                         self.steppify_bin(
-                             measurement.theory / ref_measurement.theory,
-                             isx=False),
-                         color=color, linestyle=linestyle, linewidth=linewidth)
+            self.ax.plot(
+                self.steppify_bin(measurement.get_bin('pt').T, isx=True),
+                self.steppify_bin(
+                    measurement.theory / ref_measurement.theory,
+                    isx=False),
+                color=color, linestyle=linestyle, linewidth=linewidth)
 
 
 class DataTheoryRatio(SimplePlot):
@@ -233,7 +235,7 @@ class DataTheoryRatio(SimplePlot):
         super(DataTheoryRatio, self).__init__()
         self.measurements = measurements
         self.prepare()
-        self.set_style(style='cms')
+        self.set_style(style='cmsprel')
 
     def prepare(self):
         super(DataTheoryRatio, self).prepare()
@@ -245,7 +247,7 @@ class DataTheoryRatio(SimplePlot):
 
         self.ax.tick_params(which='major', length=8, width=1.5)
         self.ax.tick_params(which='minor', length=4, width=1)
-        self.ax.grid(True)
+        self.ax.yaxis.grid(True)
 
         bin_down = self.measurements[0].get_source('ylow')()[0]
         bin_up = self.measurements[0].get_source('yhigh')()[0]
@@ -264,8 +266,8 @@ class DataTheoryRatio(SimplePlot):
         stat_unc = ref_measurement.get_diagonal_unc(label=('stat',))
         theo_unc = ref_measurement.get_diagonal_unc(origin=('theo',))
 
-        #print ','.join(map(str, ref_measurement.get_source('ptlow')()))
-        #print ','.join(map(str, ref_measurement.get_source('xsnlo')()))
+        # print ','.join(map(str, ref_measurement.get_source('ptlow')()))
+        # print ','.join(map(str, ref_measurement.get_source('xsnlo')()))
 
         self.ax.errorbar(x=ref_measurement.get_bin_mid('pt'),
                          xerr=ref_measurement.get_bin_error('pt'),
@@ -281,9 +283,8 @@ class DataTheoryRatio(SimplePlot):
                 0]) / ref_measurement.theory, isx=False),
             y2=self.steppify_bin((ref_measurement.data + exp_unc[
                 1]) / ref_measurement.theory, isx=False),
-            hatch='/', alpha=1.0, color='none',
+            hatch='//', alpha=1.0, color='none',
             edgecolor='Gold')
-
 
         self.ax.text(0.02, 0.98, ref_measurement.pdf_set, va='top',
                      ha='left', transform=self.ax.transAxes, color='black')
@@ -296,18 +297,18 @@ class DataTheoryRatio(SimplePlot):
                     0]) / ref_measurement.theory, isx=False),
                 y2=self.steppify_bin((measurement.theory + theo_unc[
                     1]) / ref_measurement.theory, isx=False),
-                hatch='/', alpha=1.0, color='none',
+                hatch='//', alpha=1.0, color='none',
                 edgecolor=color)
 
             self.ax.plot(self.steppify_bin(ref_measurement.get_bin('pt').T,
-                                isx=True),
+                                           isx=True),
                          self.steppify_bin(measurement.theory /
-                         ref_measurement.theory),
+                                           ref_measurement.theory),
                          color=color, linestyle='-', linewidth=2)
 
             p = matplotlib.patches.Rectangle((1, 1), 0, 0,
                                              label=measurement.pdf_set,
-                                             hatch='/', alpha=1.0, fill=False,
+                                             hatch='//', alpha=1.0, fill=False,
                                              edgecolor=color)
             self.ax.add_patch(p)
 
@@ -318,39 +319,61 @@ class DataTheoryRatio(SimplePlot):
 
 
 class Chi2Distribution(SimplePlot):
-    def __init__(self, analysis, pdf_family, scale):
+
+    def __init__(self, analysis, pdf_family, scenario, scale):
         super(Chi2Distribution, self).__init__()
         self.prepare()
-        self.set_style(style='cms')
+        self.set_style(style='cmsprel')
         cache_filepath = os.path.join(config.cache_chi2, analysis,
-                                      '{}_{}.npz'.format(pdf_family, scale))
+                                      '{}_{}_{}.npz'.format(pdf_family,
+                                                            scenario,
+                                                            scale))
         self.data = ArrayDict(cache_filepath)
+        self.pdf_family = pdf_family
+        self.analysis = analysis
+        self.scale = scale
 
+    def fit_polynomial(self, data, deg=2):
 
-    def fit_chi2_values(self, alphas, chi2, deg=2):
-        poly = Polynomial.fit(alphas, chi2, deg)
+        poly = Polynomial.fit(data['alphas'], data['chi2'], deg)
         if numpy.isnan(numpy.min(poly.coef)):
             print 'RankWarning in fit'
-            return None, None
-        poly_deriv = poly.deriv()
-        alphas = {'central': poly_deriv.roots()[0]}
-        alphas['chi2'] = poly(alphas['central'])
-        poly_shifted = poly - ([alphas['chi2'] + 1., ] + (deg - 1) * [0, ])
-        (down, up) = poly_shifted.roots()
-        alphas['down'] = alphas['central'] - down
-        alphas['up'] = up - alphas['central']
+            return None
+        return poly
 
-        return poly, alphas
+    def extract_voi(self, poly, data):
+
+        poly_deriv = poly.deriv()
+        voi = {}
+        # Central as value
+        voi['alphas'] = poly_deriv.roots()[0]
+        # Chi2 of central value
+        voi['chi2'] = poly(voi['alphas'])
+        poly_shifted = poly - ([voi['chi2'] + 1., ] + [0, ])
+        (down, up) = poly_shifted.roots()
+        # Errors up and down
+        voi['down'] = voi['alphas'] - down
+        voi['up'] = up - voi['alphas']
+        # NDOF and chi2ndof
+        voi['ndof'] = data['ndof'][0]
+        voi['chi2ndof'] = voi['chi2'] / voi['ndof']
+        return voi
 
     def produce_plot(self):
 
         self.ax.scatter(x=self.data['alphas'], y=self.data['chi2'],
                         color='black', s=50)
 
-        #Get Interpolation of Chi2 Values
-        poly, alphas = self.fit_chi2_values(self.data['alphas'],
-                                            self.data['chi2'], deg=2)
+        # Get Interpolation of Chi2 Values
+        poly = self.fit_polynomial(self.data, deg=2)
+        voi = self.extract_voi(poly, self.data)
         self.ax.plot(self.data['alphas'],
                      poly(self.data['alphas']), color='blue')
 
-
+        alphas_text = r'$\alpha_s(M_\mathrm{{Z}}^2)={{{alphas:.4f}}}_{{-{down:.4f}}}^{{+{up:.4f}}}$'.format(
+            **voi)
+        self.ax.text(
+            0.99, 0.99, "{}\n{}\n{}".format(
+                self.pdf_family, alphas_text, self.scale),
+            va='top', ha='right', ma='left',
+            transform=self.ax.transAxes, color='black')

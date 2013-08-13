@@ -1,10 +1,11 @@
 import numpy
 
 from fastnloreader import FastNLOLHAPDF
-#from fastnloreader import SetGlobalVerbosity
+# from fastnloreader import SetGlobalVerbosity
 
 
 class Fnlo(object):
+
     def __init__(self, table_filename, lhgrid_filename, member=0,
                  scale_factor=(1.0, 1.0), pdf_type=None, pdf_clscale=1.0):
 
@@ -22,7 +23,7 @@ class Fnlo(object):
         self._pdf_clscale = pdf_clscale
 
         # FastNLOReader instance
-        #SetGlobalVerbosity(1)
+        # SetGlobalVerbosity(1)
         self._fnlo = FastNLOLHAPDF(self._table_filename,
                                    self._lhgrid_filename, self._member)
         self._fnlo.FillPDFCache()
@@ -34,16 +35,16 @@ class Fnlo(object):
         self._nobsbins = self._fnlo.GetNObsBins()
         self._ndiffbins = self._fnlo.GetNDiffBin()
 
-        #Get Differential Bins
+        # Get Differential Bins
         self._bins_down = numpy.array(self._fnlo.GetLowBinEdge()).transpose()
         self._bins_up = numpy.array(self._fnlo.GetUpBinEdge()).transpose()
 
-        #Member Cross Sections
+        # Member Cross Sections
         self._member_crosssections = None
-        #self._xslo = None
-        #self._xsnlo = None
-        #self._pdf_uncert = None
-        #self._pdf_cov_matrix = None
+        # self._xslo = None
+        # self._xsnlo = None
+        # self._pdf_uncert = None
+        # self._pdf_cov_matrix = None
 
     def __del__(self):
         del self._fnlo
@@ -91,7 +92,8 @@ class Fnlo(object):
         elif self._pdf_type in ['EV', 'SEV', 'EVVAR', 'NONE']:
             return self.get_member_crosssection(member=self._member)
         else:
-            raise Exception("PDF type not identified:{}".format(self._pdf_type))
+            raise Exception(
+                "PDF type not identified:{}".format(self._pdf_type))
 
     def get_bins_up(self):
         return self._bins_up
@@ -128,11 +130,10 @@ class Fnlo(object):
                                                   self._nobsbins))
 
         for member in range(0, self._npdfmembers):
-            #self._fnlo.SetLHAPDFMember(member)
-            #self._fnlo.CalcCrossSection()
+            # self._fnlo.SetLHAPDFMember(member)
+            # self._fnlo.CalcCrossSection()
             self._member_crosssections[member] = self.get_member_crosssection(
                 member=member)
-
 
     def get_cross_section(self, member=None, scale_factor=None):
         if scale_factor:
@@ -165,13 +166,13 @@ class Fnlo(object):
                     self._member_crosssections[0],
                     self._member_crosssections[2 * i] -
                     self._member_crosssections[0]),
-                                                            0.))
+                    0.))
                 pdf_uncert[1] += numpy.square(numpy.maximum(numpy.maximum(
                     self._member_crosssections[2 * i - 1] -
                     self._member_crosssections[0],
                     self._member_crosssections[2 * i] -
                     self._member_crosssections[0]),
-                                                            0.))
+                    0.))
             pdf_uncert = numpy.sqrt(pdf_uncert)
         elif symmetric is True:
             for i in range(1, self._npdfmembers / 2 + 1):
@@ -201,12 +202,11 @@ class Fnlo(object):
         else:
             return None
 
-
     def get_pdf_sample_covariance(self):
         if self._member_crosssections is None:
             self._calc_member_crosssections()
         return numpy.cov(self._member_crosssections[1:], rowvar=0) /\
-            self._pdf_clscale**2
+            self._pdf_clscale ** 2
 
     def get_pdf_ev_covariance(self):
         print "scalef", self._pdf_clscale
@@ -220,9 +220,8 @@ class Fnlo(object):
                 self._member_crosssections[2 * i] -
                 self._member_crosssections[2 * i - 1])
 
-        cov_matrix /= (4. * self._pdf_clscale**2)
+        cov_matrix /= (4. * self._pdf_clscale ** 2)
         return cov_matrix
-
 
     def get_scale_uncert(self, var='6p', def_scale_factor=(1.0, 1.0)):
         if var == '6p':

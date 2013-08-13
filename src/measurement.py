@@ -1,11 +1,7 @@
 import numpy
-import numpy.ma
-
-
 
 
 class Measurement(object):
-
     def __init__(self, sources, data=None, theory=None,
                  scenario='all', pdf_set='', analysis='', pdf_config=None):
 
@@ -26,8 +22,6 @@ class Measurement(object):
             self.add_sources(sources)
 
         self.apply_scaling()
-
-
 
     def set_mask(self, mask):
         for source in self._sources_dict:
@@ -58,28 +52,28 @@ class Measurement(object):
     data = property(get_data, set_data)
 
     def get_bin(self, label):
-        #TODO: Generalize for all cases
-        return numpy.array((self._sources_dict["{}low".format(label)].get_array(),
-                   self._sources_dict["{}high".format(label)].get_array())).T
+        # TODO: Generalize for all cases
+        return numpy.array(
+            (self._sources_dict["{}low".format(label)].get_array(),
+             self._sources_dict["{}high".format(label)].get_array())).T
 
     def get_unique_bin(self, label):
         bin = self.get_bin(label)
         b = numpy.ascontiguousarray(bin).view(numpy.dtype((numpy.void,
-                                         bin.dtype.itemsize * bin.shape[1])))
+                                                           bin.dtype.itemsize *
+                                                           bin.shape[1])))
         _, idx = numpy.unique(b, return_index=True)
 
         return bin[idx]
 
-
     def get_bin_mid(self, label):
 
-        bin_mid= (self._sources_dict["{}low".format(label)].get_array() +
-                  self._sources_dict["{}high".format(label)].get_array()) / 2.0
+        bin_mid = (self._sources_dict["{}low".format(label)].get_array() +
+                   self._sources_dict["{}high".format(label)].get_array()) / 2.0
         return bin_mid
 
     def get_bin_error(self, label):
-        #TODO: Generalize for all cases
-
+        # TODO: Generalize for all cases
         return numpy.abs(self.get_bin(label).T - self.get_bin_mid(label))
 
     def get_source(self, label):
@@ -93,7 +87,7 @@ class Measurement(object):
 
     def add_sources(self, sources):
         for source in sources:
-            #Check if source is needed in current scenario
+            # Check if source is needed in current scenario
 
             if source.origin == 'data':
                 self.data = source
@@ -105,7 +99,7 @@ class Measurement(object):
                 self._corrections.append(source)
             elif source.origin in ['theo', 'exp']:
                 if self.scenario is not 'all' and \
-                        source.label not in self.scenario:
+                                source.label not in self.scenario:
                     continue
                 self._uncertainties.append(source)
             else:
@@ -118,7 +112,7 @@ class Measurement(object):
             if uncertainty.error_scaling == 'none':
                 continue
             if uncertainty.error_scaling == 'linear':
-                uncertainty.scale(numpy.abs(self.theory/self.data))
+                uncertainty.scale(numpy.abs(self.theory / self.data))
                 uncertainty.error_scaling == 'none'
             elif uncertainty.error_scaling == 'poisson':
                 raise Exception('Not yet implemented.')
@@ -157,7 +151,7 @@ class Measurement(object):
         return uncert_list
 
     def get_cov_matrix(self, corr_type=None, origin=None, label=None):
-        cov_matrix = numpy.zeros((self._nbins,self._nbins))
+        cov_matrix = numpy.zeros((self._nbins, self._nbins))
 
         for uncertainty in self._uncertainties:
             if corr_type is not None:
@@ -190,32 +184,32 @@ class Measurement(object):
 
         return numpy.sqrt(ndarray)
 
-#    def get_experimental_cov_matrix(self):
-#        _cov_matrix = numpy.zeros((self._nbins,self._nbins))
-#        for uncertainty in self._uncertainties:
-#            if uncertainty.origin == 'exp':
-#                _cov_matrix += uncertainty.get_cov_matrix()
-#
-#    def get_theoretical_cov_matrix(self):
-#        _cov_matrix = numpy.zeros((self._nbins,self._nbins))
-#        for uncertainty in self._uncertainties:
-#            if uncertainty.origin == 'exp':
-#                _cov_matrix += uncertainty.get_cov_matrix()
+    #    def get_experimental_cov_matrix(self):
+    #        _cov_matrix = numpy.zeros((self._nbins,self._nbins))
+    #        for uncertainty in self._uncertainties:
+    #            if uncertainty.origin == 'exp':
+    #                _cov_matrix += uncertainty.get_cov_matrix()
+    #
+    #    def get_theoretical_cov_matrix(self):
+    #        _cov_matrix = numpy.zeros((self._nbins,self._nbins))
+    #        for uncertainty in self._uncertainties:
+    #            if uncertainty.origin == 'exp':
+    #                _cov_matrix += uncertainty.get_cov_matrix()
 
-#     def get_dic_of_abs_uncertainties(self, corr_type='', symmetric=False):
-#         uncert_dic = {}
-#         for label, uncertainty in self._uncertainties.items():
-#             if uncertainty.corr_type == corr_type:
-#                 uncert_dic[label] = uncertainty.get_abs_uncert(
-#                   symmetric=symmetric)
-#         return uncert_dic
+    #     def get_dic_of_abs_uncertainties(self, corr_type='', symmetric=False):
+    #         uncert_dic = {}
+    #         for label, uncertainty in self._uncertainties.items():
+    #             if uncertainty.corr_type == corr_type:
+    #                 uncert_dic[label] = uncertainty.get_abs_uncert(
+    #                   symmetric=symmetric)
+    #         return uncert_dic
 
     def mask_data(self, mask):
         self._mask = mask
 
     def unmask_data(self):
         self._mask = None
-    
+
     def get_obs(self, label):
         """Return Observable of given label"""
         if label == 'data':
@@ -227,12 +221,11 @@ class Measurement(object):
         elif label in self._uncertainties:
             return self._uncertainties[label]
         else:
-            #Label not found
+            # Label not found
             return None
 
 
 class Source(object):
-
     def __init__(self, array=None, label=None, origin=None, ):
         self._label = label
         self._array = array
@@ -282,42 +275,45 @@ class Source(object):
 
     def get_nbins(self):
         return self._nbins
+
     nbins = property(get_nbins)
 
     def get_array(self):
         return self.masked(self._array)
+
     array = property(get_array)
 
     def get_origin(self):
         return self._origin
+
     origin = property(get_origin)
 
     def get_label(self):
         return self._label
+
     label = property(get_label)
 
 
 class UncertaintySource(Source):
-
     def __init__(self, array=None, label=None, origin=None, cov_matrix=None,
-                corr_matrix= None, corr_type=None, error_scaling='none'):
-                    
+                 corr_matrix=None, corr_type=None, error_scaling='none'):
+
         super(UncertaintySource, self).__init__(label=label, origin=origin)
         if cov_matrix is not None:
             self._symmetric = True
             array = numpy.sqrt(cov_matrix.diagonal())
-            self._corr_matrix = cov_matrix / numpy.outer(array,array)
+            self._corr_matrix = cov_matrix / numpy.outer(array, array)
         else:
             self._corr_matrix = corr_matrix
         self._corr_type = corr_type
         self.error_scaling = error_scaling
 
-        #Set Diagonal error elements
+        # Set Diagonal error elements
         if array.ndim == 1:
             self._symmetric = True
             self._nbins = array.shape[0]
-            self._array = numpy.vstack((array,array))
-        elif array.ndim ==2:
+            self._array = numpy.vstack((array, array))
+        elif array.ndim == 2:
             self._symmetric = False
             self._nbins = array.shape[1]
             self._array = array
@@ -329,10 +325,10 @@ class UncertaintySource(Source):
 
     def set_array(self, array):
         if array.ndim == 1:
-            #Symmetric uncertainty
-            self._array = numpy.array((array,array))
+            # Symmetric uncertainty
+            self._array = numpy.array((array, array))
         elif array.ndim == 2:
-            #Assume it is asymmetric
+            # Assume it is asymmetric
             self._array = array
         self._nbins = self._array.shape[1]
 
@@ -356,24 +352,21 @@ class UncertaintySource(Source):
     def set_cov_matrix(self, cov_matrix):
 
         array = numpy.sqrt(cov_matrix.diagonal())
-        self._corr_matrix = cov_matrix / numpy.outer(array,array)
+        self._corr_matrix = cov_matrix / numpy.outer(array, array)
         self.set_array(array)
         self._symmetric = True
 
     def scale(self, scale_factor):
         self._array *= scale_factor
 
-
-
     def set_correlation_matrix(self, corr_matrix):
         self._corr_type = 'custom'
         self._corr_matrix = corr_matrix
         self._calc_cov_matrix()
 
-
     def get_correlation_matrix(self):
         if self._corr_type == 'fully':
-            return self.masked(numpy.ones((self._nbins,self._nbins)))
+            return self.masked(numpy.ones((self._nbins, self._nbins)))
         elif self._corr_type == 'uncorr':
             return self.masked(numpy.identity(self._nbins))
         elif self._corr_type == 'bintobin':
@@ -391,7 +384,7 @@ class UncertaintySource(Source):
 
     def get_corr_type(self):
         return self._corr_type
-        
+
     corr_type = property(get_corr_type, set_corr_type)
 
     def set_label(self, label):
@@ -399,15 +392,15 @@ class UncertaintySource(Source):
 
     def get_label(self):
         return self._label
-        
+
     label = property(get_label, set_label)
 
     def get_origin(self):
         return self._origin
 
-    def set_origin(self,origin):
+    def set_origin(self, origin):
         self._origin = origin
-        
+
     origin = property(get_origin, set_origin)
 
     def get_cov_matrix(self):
@@ -422,7 +415,7 @@ class UncertaintySource(Source):
             return self.masked(numpy.outer(
                 self.get_array(symmetric=True),
                 self.get_array(symmetric=True)) *
-                self.get_correlation_matrix())
+                               self.get_correlation_matrix())
         else:
             raise Exception('Correlation type not valid.')
 
