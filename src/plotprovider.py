@@ -57,6 +57,8 @@ class SimplePlot(object):
         matplotlib.rcParams['text.usetex'] = False
         # Axes
         matplotlib.rcParams['axes.linewidth'] = 2.0
+        matplotlib.rcParams['xtick.major.pad'] = 6
+        matplotlib.rcParams['xtick.minor.pad'] = 8
         # Saving
         matplotlib.rcParams['savefig.bbox'] = 'tight'
         matplotlib.rcParams['savefig.dpi'] = 300
@@ -266,8 +268,7 @@ class DataTheoryRatio(SimplePlot):
         stat_unc = ref_measurement.get_diagonal_unc(label=('stat',))
         theo_unc = ref_measurement.get_diagonal_unc(origin=('theo',))
 
-        # print ','.join(map(str, ref_measurement.get_source('ptlow')()))
-        # print ','.join(map(str, ref_measurement.get_source('xsnlo')()))
+        self.ax.axhline(y=1.0, lw=2.0, color='black', zorder=0)
 
         self.ax.errorbar(x=ref_measurement.get_bin_mid('pt'),
                          xerr=ref_measurement.get_bin_error('pt'),
@@ -275,7 +276,8 @@ class DataTheoryRatio(SimplePlot):
                          yerr=stat_unc / ref_measurement.theory,
                          fmt='o',
                          capthick=2,
-                         color='black')
+                         color='black',
+                         label='Data + Stat.')
 
         self.ax.fill_between(
             x=self.steppify_bin(ref_measurement.get_bin('pt').T, isx=True),
@@ -283,14 +285,22 @@ class DataTheoryRatio(SimplePlot):
                 0]) / ref_measurement.theory, isx=False),
             y2=self.steppify_bin((ref_measurement.data + exp_unc[
                 1]) / ref_measurement.theory, isx=False),
-            hatch='//', alpha=1.0, color='none',
+            hatch='x', alpha=1.0, color='none',
             edgecolor='Gold')
+
+        p = matplotlib.patches.Rectangle((1, 1), 0, 0,
+                                     label='Sys.',
+                                     hatch='x', alpha=1.0, fill=False,
+                                     edgecolor='Gold')
+        self.ax.add_patch(p)
 
         self.ax.text(0.02, 0.98, ref_measurement.pdf_set, va='top',
                      ha='left', transform=self.ax.transAxes, color='black')
 
         for measurement in self.measurements:
             color = next(self.ax._get_lines.color_cycle)
+            print measurement.theory
+            print measurement.get_bin('pt')
             self.ax.fill_between(
                 x=self.steppify_bin(measurement.get_bin('pt').T, isx=True),
                 y1=self.steppify_bin((measurement.theory - theo_unc[
@@ -300,11 +310,11 @@ class DataTheoryRatio(SimplePlot):
                 hatch='//', alpha=1.0, color='none',
                 edgecolor=color)
 
-            self.ax.plot(self.steppify_bin(ref_measurement.get_bin('pt').T,
-                                           isx=True),
-                         self.steppify_bin(measurement.theory /
-                                           ref_measurement.theory),
-                         color=color, linestyle='-', linewidth=2)
+            #self.ax.plot(self.steppify_bin(ref_measurement.get_bin('pt').T,
+                                           #isx=True),
+                         #self.steppify_bin(measurement.theory /
+                                           #ref_measurement.theory),
+                         #color=color, linestyle='-', linewidth=2)
 
             p = matplotlib.patches.Rectangle((1, 1), 0, 0,
                                              label=measurement.pdf_set,

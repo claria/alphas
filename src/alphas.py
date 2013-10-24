@@ -1,12 +1,12 @@
 import os
 import numpy
 
-from src.measurement import Measurement
-from src.providers import DataProvider, TheoryProvider
-from src.chi2 import Chi2Nuisance
+from measurement import Measurement
+from providers import DataProvider, TheoryProvider
+from chi2 import Chi2Nuisance
 from config import config
-from src.libs.arraydict import ArrayDict
-from src.plotprovider import DataTheoryRatio, Chi2Distribution, AlphasSensitivityPlot
+from libs.arraydict import ArrayDict
+from plotprovider import DataTheoryRatio, Chi2Distribution, AlphasSensitivityPlot
 
 
 def get_measurement(analysis, pdf_set, scale, scenario='all'):
@@ -99,8 +99,23 @@ def plot(analysis, **kwargs):
             for pdf_set in kwargs['pdf_sets']:
                 measurements.append(
                     get_measurement(analysis, pdf_set, scale))
-
-            # Split according the y bins
+            
+            #Fiddle Powheg in
+            #from measurement import Source
+            #from measurement import UncertaintySource
+            #powheg = numpy.genfromtxt('/home/aem/POWHEG_NLO_xs_2011_combinedBornKt.txt').T
+            #powheg_sources = []
+            #powheg_sources.append(Source(powheg[3]/10000., label='xsnlow', origin='theory'))
+            #powheg_sources.append(Source(powheg[1], label='ylow', origin='bin'))
+            #powheg_sources.append(Source(powheg[2], label='yhigh', origin='bin'))
+            #powheg_sources.append(UncertaintySource(powheg[4], label='stat', origin='exp'))
+            #powheg_sources.append(measurements[0].get_source('ptlow'))
+            #powheg_sources.append(measurements[0].get_source('pthigh'))
+            #aasdf = Measurement(powheg_sources, pdf_set='POWHEG + Stat.')
+            #print aasdf.theory
+            #pass
+            #measurements.append(aasdf)
+            #Split according the y bins
             bin1 = measurements[0].get_bin('y')
             bin1_unique = measurements[0].get_unique_bin('y')
             # b = numpy.ascontiguousarray(bin1).view(numpy.dtype((numpy.void,

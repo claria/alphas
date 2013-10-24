@@ -1,8 +1,8 @@
 import os
 
-from src.libs import arraydict
-from src.measurement import Source, UncertaintySource
-from src.fnlo import Fnlo
+from libs import arraydict
+from measurement import Source, UncertaintySource
+from fnlo import Fnlo
 
 from config import config
 
