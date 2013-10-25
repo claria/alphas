@@ -1,4 +1,0 @@
-alphas
-======
-
-Strong coupling fits
