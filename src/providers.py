@@ -2,7 +2,7 @@ import os
 
 from libs import arraydict
 from measurement import Source, UncertaintySource
-from fnlo import Fnlo
+from unilibs.fnlo import FastNLOUncertainties
 
 from config import config
 
@@ -49,7 +49,6 @@ class Provider(object):
                                                                label=label,
                                                                corr_type=corr_type,
                                                                error_scaling=error_scaling)
-
                 self.sources.append(uncertainty_source)
 
 
@@ -101,9 +100,9 @@ class TheoryProvider(Provider):
             self.parse_arraydict()
 
     def _cache_theory(self):
-        fnloreader = Fnlo(self._table_filepath, self._lhgrid_filename,
+        fnloreader = FastNLOUncertainties(self._table_filepath, self._lhgrid_filename,
                           scale_factor=self._scale,
-                          pdf_type=self._lhapdf_config['pdf_type'],
+                          errortype=self._lhapdf_config['errortype'],
                           member=int(self._lhapdf_config.get('member', 0)),
                           pdf_clscale=float(
                               self._lhapdf_config.get('pdf_clscale', 1.0)))

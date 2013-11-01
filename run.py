@@ -41,18 +41,18 @@ def main():
     #Plotting
     parser_plot = subparsers.add_parser('plot', help='Do the plotting',
                                         parents=[parent_parser])
-    parser_plot.add_argument('plot', 
+    parser_plot.add_argument('plot',
                              type=str,
                              choices=['ratio', 'asratio', 'chi2'],
                              help='Types of plots')
 
     parser_plot.add_argument('-s', '--scenario', default='all',
-                            help='PDF Unc Source')
+                             help='PDF Unc Source')
 
     parser_plot.set_defaults(func=plot)
 
     parser_batch = subparsers.add_parser('batch', help='Do Batch processing',
-                                        parents=[parent_parser])
+                                         parents=[parent_parser])
     parser_batch.set_defaults(func=batch_processing)
 
     kwargs = vars(parser.parse_args())

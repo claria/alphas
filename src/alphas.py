@@ -100,22 +100,6 @@ def plot(analysis, **kwargs):
                 measurements.append(
                     get_measurement(analysis, pdf_set, scale))
             
-            #Fiddle Powheg in
-            #from measurement import Source
-            #from measurement import UncertaintySource
-            #powheg = numpy.genfromtxt('/home/aem/POWHEG_NLO_xs_2011_combinedBornKt.txt').T
-            #powheg_sources = []
-            #powheg_sources.append(Source(powheg[3]/10000., label='xsnlow', origin='theory'))
-            #powheg_sources.append(Source(powheg[1], label='ylow', origin='bin'))
-            #powheg_sources.append(Source(powheg[2], label='yhigh', origin='bin'))
-            #powheg_sources.append(UncertaintySource(powheg[4], label='stat', origin='exp'))
-            #powheg_sources.append(measurements[0].get_source('ptlow'))
-            #powheg_sources.append(measurements[0].get_source('pthigh'))
-            #aasdf = Measurement(powheg_sources, pdf_set='POWHEG + Stat.')
-            #print aasdf.theory
-            #pass
-            #measurements.append(aasdf)
-            #Split according the y bins
             bin1 = measurements[0].get_bin('y')
             bin1_unique = measurements[0].get_unique_bin('y')
             # b = numpy.ascontiguousarray(bin1).view(numpy.dtype((numpy.void,
@@ -127,12 +111,14 @@ def plot(analysis, **kwargs):
                 # mask = (ylowbin == ylow)
                 # Apply mask to all measurements
                 map(lambda x: x.set_mask(mask), measurements)
-                dt_plot = DataTheoryRatio(measurements)
-                dt_plot.produce_plot()
-                filepath = '{}/ratio/{}_{}_{}_{}_{}.pdf'.\
-                    format(config.output_plots, analysis,
-                           measurements[0].pdf_set, scale, *bin)
-                dt_plot.finalize(filepath=filepath)
+                output_fn = '{}/ratio/{}_{}_{}_{}_{}'.format(config.output_plots,
+                                                             analysis,
+                                                             measurements[0].pdf_set,
+                                                             scale, *bin)
+                dt_plot = DataTheoryRatio(measurements, output_fn=output_fn,
+                                          output_ext=['pdf', ])
+                dt_plot.do_plot()
+
         elif kwargs['plot'] == 'asratio':
             measurements = []
             for pdf_set in kwargs['pdf_sets']:
@@ -151,23 +137,28 @@ def plot(analysis, **kwargs):
                 # mask = (ylowbin == ylow)
                 # Apply mask to all measurements
                 map(lambda x: x.set_mask(mask), measurements)
-                as_plot = AlphasSensitivityPlot(measurements)
-                as_plot.produce_plot()
-                filepath = '{}/asratio/{}_{}_{}_{}_{}.pdf'.\
-                    format(config.output_plots, analysis,
-                           kwargs['pdf_family'], scale, *bin)
-                as_plot.finalize(filepath=filepath)
+                output_fn = '{}/asratio/{}_{}_{}_{}_{}'.format(config.output_plots,
+                                                               analysis,
+                                                               kwargs['pdf_family'],
+                                                               scale,
+                                                               *bin)
+                as_plot = AlphasSensitivityPlot(measurements,
+                                                output_fn=output_fn,
+                                                output_ext=['pdf', ])
+                as_plot.do_plot()
 
         elif kwargs['plot'] == 'chi2':
-            chi2_plot = Chi2Distribution(analysis,
-                                         kwargs['pdf_family'],
-                                         kwargs['scenario'],
-                                         scale)
-            chi2_plot.produce_plot()
-            filepath = '{}/chi2/{}_{}_{}_{}.pdf'.format(
+            output_fn = '{}/chi2/{}_{}_{}_{}.pdf'.format(
                 config.output_plots,
                 analysis,
                 kwargs['pdf_family'],
                 kwargs['scenario'],
                 scale)
-            chi2_plot.finalize(filepath=filepath)
+            chi2_plot = Chi2Distribution(analysis,
+                                         kwargs['pdf_family'],
+                                         kwargs['scenario'],
+                                         scale,
+                                         output_fn=output_fn,
+                                         output_ext=['png', ])
+            chi2_plot.do_plot()
+
