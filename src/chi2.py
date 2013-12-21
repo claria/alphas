@@ -114,3 +114,5 @@ class Chi2Nuisance(Chi2):
         self._chi2 = (residual_mod * self._inv_matrix * residual_mod.getT())[
             0, 0]
         self._chi2 += chi2_corr
+        print self._chi2
+        print self._theory_mod.size

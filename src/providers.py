@@ -100,12 +100,19 @@ class TheoryProvider(Provider):
             self.parse_arraydict()
 
     def _cache_theory(self):
-        fnloreader = FastNLOUncertainties(self._table_filepath, self._lhgrid_filename,
-                          scale_factor=self._scale,
-                          errortype=self._lhapdf_config['errortype'],
-                          member=int(self._lhapdf_config.get('member', 0)),
-                          pdf_clscale=float(
-                              self._lhapdf_config.get('pdf_clscale', 1.0)))
-        self._array_dict = arraydict.ArrayDict(**fnloreader.get_all())
-        del fnloreader
-        self._array_dict.save(self._cache_filepath)
+        if not self.table == 'flatfile':
+            fnloreader = FastNLOUncertainties(self._table_filepath, self._lhgrid_filename,
+                              scale_factor=self._scale,
+                              errortype=self._lhapdf_config['errortype'],
+                              member=int(self._lhapdf_config.get('member', 0)),
+                              pdf_clscale=float(
+                                  self._lhapdf_config.get('pdf_clscale', 1.0)))
+            self._array_dict = arraydict.ArrayDict(**fnloreader.get_all())
+            del fnloreader
+            self._array_dict.save(self._cache_filepath)
+        else:
+            self._theo_file = os.path.join(config.table_dir, analysis + '_theory.txt')
+            self._array_dict = arraydict.ArrayDict(self._theo_file)
+            self._array_dict.save(self._cache_filepath)
+
+

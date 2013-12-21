@@ -70,8 +70,27 @@ def perform_chi2test(analysis, pdf_family, scenario='all', **kwargs):
         for i, pdf_set in enumerate(kwargs['pdf_sets']):
             meas = get_measurement(analysis, pdf_set, scale,
                                    scenario=scenario_uncerts)
+            #Get data mask
+            mask = meas.get_mask().copy()
+            for cut in ana_config['cuts']:
+                cut_arr = meas.get_source(cut).get_array()
+                min_val = float(ana_config['cuts'][cut]['min'])
+                max_val = float(ana_config['cuts'][cut]['max'])
+                print min_val, max_val
+                #Cut min/max of cut_obs
+                cut_mask = ((cut_arr < max_val)
+                                & (cut_arr >= min_val))
+                mask = mask*cut_mask
+                print mask
+            meas.set_mask(mask)
+
+
+
+
+
             alphas = float(lhapdf_config['pdf_sets'][pdf_set]['alphas'])
             chi2nuis = Chi2Nuisance(meas)
+            print chi2nuis
             results['alphas'][i] = alphas
             results['chi2'][i] = chi2nuis.get_chi2()
             results['ndof'][i] = chi2nuis.get_ndof()
@@ -99,7 +118,7 @@ def plot(analysis, **kwargs):
             for pdf_set in kwargs['pdf_sets']:
                 measurements.append(
                     get_measurement(analysis, pdf_set, scale))
-            
+
             bin1 = measurements[0].get_bin('y')
             bin1_unique = measurements[0].get_unique_bin('y')
             # b = numpy.ascontiguousarray(bin1).view(numpy.dtype((numpy.void,
