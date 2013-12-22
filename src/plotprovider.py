@@ -27,8 +27,8 @@ class AlphasSensitivityPlot(BasePlot):
         self.ax.xaxis.set_minor_formatter(
             plt.FuncFormatter(self.log_locator_filter))
 
-        bin_down = self.measurements[0].get_source('ylow')()[0]
-        bin_up = self.measurements[0].get_source('yhigh')()[0]
+        bin_down = self.measurements[0].get_source('y_low')()[0]
+        bin_up = self.measurements[0].get_source('y_high')()[0]
         if bin_down != 0.:
             ybin_label = "${0} \leq |y| < {1}$".format(bin_down, bin_up)
         else:
@@ -130,8 +130,8 @@ class DataTheoryRatio(BasePlot):
         self.ax.tick_params(which='minor', length=4, width=1)
         self.ax.yaxis.grid(True)
 
-        bin_down = self.measurements[0].get_source('ylow')()[0]
-        bin_up = self.measurements[0].get_source('yhigh')()[0]
+        bin_down = self.measurements[0].get_source('y_low')()[0]
+        bin_up = self.measurements[0].get_source('y_high')()[0]
         if bin_down != 0.:
             ybin_label = "${0} \leq |y| < {1}$".format(bin_down, bin_up)
         else:
@@ -146,6 +146,8 @@ class DataTheoryRatio(BasePlot):
         ref_measurement = self.measurements[0]
         exp_unc = ref_measurement.get_diagonal_unc(origin=('exp',))
         stat_unc = ref_measurement.get_diagonal_unc(label=('stat',))
+        print "hallo"
+        print stat_unc
         theo_unc = ref_measurement.get_diagonal_unc(origin=('theo',))
 
         self.ax.axhline(y=1.0, lw=2.0, color='black', zorder=0)
@@ -204,8 +206,8 @@ class DataTheoryRatio(BasePlot):
 
         self.ax.set_xlabel(r'$p_\mathrm{T}$ (GeV)')
         self.ax.set_ylabel('Ratio to {0}'.format(ref_measurement.pdf_set))
-
-        self.ax.legend(loc='best')
+        self.ax.set_ylim(0.5,1.5)
+        self.ax.legend(loc='upper right')
 
     def finalize(self):
         self._save_fig()

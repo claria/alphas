@@ -18,6 +18,8 @@ def get_measurement(analysis, pdf_set, scale, scenario='all'):
                        analysis=analysis,
                        pdf_config=config.get_config(
                            'lhapdf2')['pdf_sets'][pdf_set])
+    print "unceratinties"
+    print meas._uncertainties
 
     return meas
 
@@ -84,11 +86,9 @@ def perform_chi2test(analysis, pdf_family, scenario='all', **kwargs):
                 print mask
             meas.set_mask(mask)
 
-
-
-
-
             alphas = float(lhapdf_config['pdf_sets'][pdf_set]['alphas'])
+            print meas.data
+            print meas.theory
             chi2nuis = Chi2Nuisance(meas)
             print chi2nuis
             results['alphas'][i] = alphas
@@ -135,7 +135,7 @@ def plot(analysis, **kwargs):
                                                              measurements[0].pdf_set,
                                                              scale, *bin)
                 dt_plot = DataTheoryRatio(measurements, output_fn=output_fn,
-                                          output_ext=['pdf', ])
+                                          output_ext=['pdf', 'png'])
                 dt_plot.do_plot()
 
         elif kwargs['plot'] == 'asratio':

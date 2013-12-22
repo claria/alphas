@@ -26,6 +26,7 @@ class Measurement(object):
         for source in self._uncertainties.values():
             source.scale(data=self._data.get_array(), theory=self._theory.get_array())
 
+
     #Masking of datapoints
     def set_mask(self, mask):
         self._mask = mask
@@ -79,30 +80,30 @@ class Measurement(object):
 
     data = property(get_data, set_data)
 
-    #def get_bin(self, label):
-    #    # TODO: Generalize for all cases
-    #    return numpy.array(
-    #        (self._sources_dict["{}low".format(label)].get_array(),
-    #         self._sources_dict["{}high".format(label)].get_array())).T
+    def get_bin(self, label):
+        # TODO: Generalize for all cases
+        return numpy.array(
+            (self._bins["{}_low".format(label)].get_array(),
+             self._bins["{}_high".format(label)].get_array())).T
 
-    #def get_unique_bin(self, label):
-    #    bin = self.get_bin(label)
-    #    b = numpy.ascontiguousarray(bin).view(numpy.dtype((numpy.void,
-    #                                                       bin.dtype.itemsize *
-    #                                                       bin.shape[1])))
-    #    _, idx = numpy.unique(b, return_index=True)
-    #
-    #    return bin[idx]
+    def get_unique_bin(self, label):
+        bin = self.get_bin(label)
+        b = numpy.ascontiguousarray(bin).view(numpy.dtype((numpy.void,
+                                                           bin.dtype.itemsize *
+                                                           bin.shape[1])))
+        _, idx = numpy.unique(b, return_index=True)
 
-    #def get_bin_mid(self, label):
-    #
-    #    bin_mid = (self._sources_dict["{}low".format(label)].get_array() +
-    #               self._sources_dict["{}high".format(label)].get_array()) / 2.0
-    #    return bin_mid
+        return bin[idx]
 
-    #def get_bin_error(self, label):
-    #    # TODO: Generalize for all cases
-    #    return numpy.abs(self.get_bin(label).T - self.get_bin_mid(label))
+    def get_bin_mid(self, label):
+
+        bin_mid = (self._bins["{}_low".format(label)].get_array() +
+                   self._bins["{}_high".format(label)].get_array()) / 2.0
+        return bin_mid
+
+    def get_bin_error(self, label):
+        # TODO: Generalize for all cases
+        return numpy.abs(self.get_bin(label).T - self.get_bin_mid(label))
 
     #def get_unique_source(self, label):
     #    """Return set of source array
@@ -127,9 +128,11 @@ class Measurement(object):
 
     def add_sources(self, sources):
         for source in sources:
-            if (source.origin in ['theo', 'exp']) and \
-                    (source.label not in self.scenario):
-                continue
+            if (source.origin in ['theo', 'exp']):
+                if (source .label not in self.scenario) and \
+                        (self.scenario is not "all"):
+                    print "Omitting source {}".format(source)
+                    continue
             self._add_source(source)
 
     def has_uncert(self, corr_type=None, origin=None, label=None):
