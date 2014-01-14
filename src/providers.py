@@ -3,13 +3,14 @@ import os
 from libs import arraydict
 from measurement import Source, UncertaintySource
 from unilibs.fnlo import FastNLOUncertainties
-
+from abc import ABCMeta
 from config import config
 
 
 class Provider(object):
 
     def __init__(self):
+        __metaclass__ = ABCMeta
         self.sources = []
         self._array_dict = None
 
@@ -19,16 +20,16 @@ class Provider(object):
                 continue
 
             origin = self._ana_config['data_description'][label]
-            if origin in ['bin', 'correction', 'data', 'theory']:
-                source = Source(label=label, array=item, origin=origin)
+            if origin in ['bin', 'data_correction', 'theo_correction', 'data', 'theory']:
+                source = Source(label=label, arr=item, origin=origin)
                 self.sources.append(source)
-            elif origin in ['exp', 'theo']:
+            elif origin in ['exp_uncert', 'theo_uncert']:
                 corr_type = self._ana_config['corr_type'][label]
                 error_scaling = self._ana_config['error_scaling'].get(label,
                                                                       'none')
                 if corr_type in ['fully', 'uncorr']:
                     uncertainty_source = UncertaintySource(origin=origin,
-                                                           array=item,
+                                                           arr=item,
                                                            label=label,
                                                            corr_type=corr_type,
                                                            error_scaling=error_scaling)
@@ -42,7 +43,7 @@ class Provider(object):
                                                                error_scaling=error_scaling)
                     elif 'cor_' + label in self._array_dict:
                         uncertainty_source = UncertaintySource(origin=origin,
-                                                               array=item,
+                                                               arr=item,
                                                                corr_matrix=
                                                                self._array_dict[
                                                                    'cor_' + label],
@@ -50,6 +51,8 @@ class Provider(object):
                                                                corr_type=corr_type,
                                                                error_scaling=error_scaling)
                 self.sources.append(uncertainty_source)
+            else:
+                print "Omitting unknown source {} of origin {}.".format(label, origin)
 
 
 class DataProvider(Provider):
