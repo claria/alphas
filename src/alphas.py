@@ -3,7 +3,7 @@ import numpy
 
 from measurement import Measurement
 from providers import DataProvider, TheoryProvider
-from chi2 import Chi2Nuisance
+from chi2 import Chi2Nuisance, Chi2Cov
 from config import config
 from libs.arraydict import ArrayDict
 from plotprovider import DataTheoryRatio, Chi2Distribution, AlphasSensitivityPlot
@@ -88,10 +88,12 @@ def perform_chi2test(analysis, pdf_family, scenario='all', **kwargs):
             results['chi2'][i] = chi2nuis.get_chi2()
             results['ndof'][i] = chi2nuis.get_ndof()
             # Save nuisance parameters
-            nuisance_filename = "{}/{}_{}_{}_{}.txt".format(
-                config.output_nuisance, analysis, pdf_set,
-                scenario, scale)
-            chi2nuis.save_nuisance_parameters(nuisance_filename)
+            #nuisance_filename = "{}/{}_{}_{}_{}.txt".format(
+            #    config.output_nuisance, analysis, pdf_set,
+            #    scenario, scale)
+            #chi2nuis.save_nuisance_parameters(nuisance_filename)
+            print results
+            print chi2nuis.get_nuisance_parameters()
         results.save(filename=cache_filepath)
 
 

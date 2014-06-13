@@ -28,6 +28,8 @@ class Chi2Cov(Chi2):
         residual = numpy.matrix(self._data - self._theory)
         self._chi2 = (residual * inv_matrix * residual.getT())[0, 0]
 
+    def get_ndof(self):
+        return self._measurement.data.shape[0]
 
 class Chi2Nuisance(Chi2):
 
